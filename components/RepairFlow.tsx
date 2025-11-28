@@ -23,7 +23,10 @@ const generateTimeSlots = (dateString: string): string[] => {
   
   // Parse YYYY-MM-DD explicitly to avoid timezone shifts
   const [year, month, day] = dateString.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
+  
+  // CRITICAL FIX: Set time to 12:00:00 (Noon) to prevent midnight timezone rollover bugs.
+  // This ensures 'Monday' stays 'Monday' regardless of browser timezone offsets.
+  const date = new Date(year, month - 1, day, 12, 0, 0);
   const dayOfWeek = date.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
   
   let startHour = 10;
@@ -516,7 +519,6 @@ export const RepairFlow = () => {
       </p>
       <div className="flex gap-4 justify-center">
         <Button variant="outline" onClick={() => window.location.reload()}>Back to Home</Button>
-        <Button onClick={() => window.print()}>Print Confirmation</Button>
       </div>
     </div>
   );
