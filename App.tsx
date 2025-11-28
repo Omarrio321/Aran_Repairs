@@ -6,6 +6,7 @@ import { RefurbishedPage } from './components/RefurbishedPage';
 import { AccessoriesPage } from './components/AccessoriesPage';
 import { ContactPage } from './components/ContactPage';
 import { EnvironmentPage } from './components/EnvironmentPage';
+import { AboutPage } from './components/AboutPage';
 import { ShieldCheck, Clock, Award, Star } from 'lucide-react';
 
 const Features = () => (
@@ -72,15 +73,7 @@ const App: React.FC = () => {
       case 'business': // Keeping business case as fallback redirect for old links if any
         return <EnvironmentPage />;
       case 'about':
-        return (
-           <div className="container mx-auto px-4 py-20 text-center">
-             <h1 className="text-4xl font-bold text-slate-900 mb-6">About Aran Repairs</h1>
-             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-               Founded in 2024, Aran Repairs is dedicated to extending the lifespan of electronics through quality repairs and refurbishment.
-               We believe in providing honest, fast, and high-quality service to keep your devices running longer.
-             </p>
-           </div>
-        );
+        return <AboutPage />;
       default:
         return null;
     }

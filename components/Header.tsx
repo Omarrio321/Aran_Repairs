@@ -157,9 +157,10 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
               <button onClick={() => handleMobileNavigate('home')} className={mobileLinkClass('home')}>Home</button>
               <button onClick={() => handleMobileNavigate('refurbished')} className={mobileLinkClass('refurbished')}>Refurbished Phones</button>
               <button onClick={() => handleMobileNavigate('accessories')} className={mobileLinkClass('accessories')}>Accessories</button>
-              <button onClick={() => handleMobileNavigate('recycle')} className={mobileLinkClass('recycle')}>Recycle Program</button>
+              
               <button onClick={() => handleMobileNavigate('contact')} className={mobileLinkClass('contact')}>Contact</button>
               <button onClick={() => handleMobileNavigate('about')} className={mobileLinkClass('about')}>About Us</button>
+              <button onClick={() => handleMobileNavigate('recycle')} className={mobileLinkClass('recycle')}>Recycle Program</button>
               <div className="p-4">
                 <Button className="w-full h-12 text-base" onClick={() => handleMobileNavigate('home')}>Book Appointment</Button>
               </div>
