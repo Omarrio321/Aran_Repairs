@@ -7,7 +7,10 @@ import { AccessoriesPage } from './components/AccessoriesPage';
 import { ContactPage } from './components/ContactPage';
 import { EnvironmentPage } from './components/EnvironmentPage';
 import { AboutPage } from './components/AboutPage';
-import { ShieldCheck, Clock, Award, Star } from 'lucide-react';
+import { ShieldCheck, Clock, Award, Star, Smartphone, Tablet, Laptop, Watch, Gamepad2 } from 'lucide-react';
+import { Card } from './components/ui';
+import { CATEGORIES } from './data';
+import { DeviceCategory } from './types';
 
 const Features = () => (
   <section className="py-12 bg-white border-y border-slate-100">
@@ -32,8 +35,23 @@ const Features = () => (
   </section>
 );
 
+const IconMap: Record<string, React.ReactNode> = {
+  Smartphone: <Smartphone className="h-8 w-8" />,
+  Tablet: <Tablet className="h-8 w-8" />,
+  Laptop: <Laptop className="h-8 w-8" />,
+  Watch: <Watch className="h-8 w-8" />,
+  Gamepad2: <Gamepad2 className="h-8 w-8" />,
+};
+
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState('home');
+  const [selectedCategoryForRepair, setSelectedCategoryForRepair] = useState<DeviceCategory | null>(null);
+
+  const handleCategorySelect = (category: DeviceCategory) => {
+    setSelectedCategoryForRepair(category);
+    setActivePage('repairs');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const renderContent = () => {
     switch (activePage) {
@@ -54,14 +72,41 @@ const App: React.FC = () => {
                </div>
             </div>
 
-            {/* Main Wizard Area */}
+            {/* Quick Category Selection */}
             <div className="container mx-auto px-4 -mt-10 relative z-20">
               <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 md:p-10 mb-16">
-                <RepairFlow />
+                 <div className="text-center mb-8">
+                   <h2 className="text-2xl font-bold mb-2">What device needs repair?</h2>
+                   <p className="text-slate-500">Select your device type for an instant quote</p>
+                 </div>
+                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {CATEGORIES.map((cat) => (
+                      <Card 
+                        key={cat.id} 
+                        onClick={() => handleCategorySelect(cat)}
+                        className="cursor-pointer hover:border-primary-500 hover:shadow-md transition-all group text-center py-8"
+                      >
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="p-4 rounded-full bg-slate-50 text-slate-600 group-hover:bg-primary-50 group-hover:text-primary-700 transition-colors">
+                            {IconMap[cat.iconName]}
+                          </div>
+                          <span className="font-semibold text-slate-800">{cat.name}</span>
+                        </div>
+                      </Card>
+                    ))}
+                 </div>
               </div>
             </div>
             <Features />
           </>
+        );
+      case 'repairs':
+        return (
+          <div className="container mx-auto px-4 py-8">
+             <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 md:p-10">
+               <RepairFlow initialCategory={selectedCategoryForRepair} />
+             </div>
+          </div>
         );
       case 'refurbished':
         return <RefurbishedPage />;
@@ -70,7 +115,7 @@ const App: React.FC = () => {
       case 'contact':
         return <ContactPage />;
       case 'recycle':
-      case 'business': // Keeping business case as fallback redirect for old links if any
+      case 'business': // Keeping business case as fallback redirect
         return <EnvironmentPage />;
       case 'about':
         return <AboutPage />;
@@ -81,7 +126,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
-      <Header activePage={activePage} onNavigate={setActivePage} />
+      <Header activePage={activePage} onNavigate={(page) => {
+        if (page === 'repairs') setSelectedCategoryForRepair(null); // Reset when clicking header link
+        setActivePage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }} />
       
       <main className="flex-grow">
         {renderContent()}

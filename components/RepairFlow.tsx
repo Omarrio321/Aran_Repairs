@@ -60,9 +60,13 @@ const generateTimeSlots = (dateString: string): string[] => {
   return slots;
 };
 
-export const RepairFlow = () => {
-  const [step, setStep] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState<DeviceCategory | null>(null);
+interface RepairFlowProps {
+  initialCategory?: DeviceCategory | null;
+}
+
+export const RepairFlow = ({ initialCategory = null }: RepairFlowProps) => {
+  const [step, setStep] = useState(initialCategory ? 2 : 1);
+  const [selectedCategory, setSelectedCategory] = useState<DeviceCategory | null>(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [selectedModel, setSelectedModel] = useState<DeviceModel | null>(null);
   const [selectedRepairs, setSelectedRepairs] = useState<RepairOption[]>([]);
@@ -74,6 +78,14 @@ export const RepairFlow = () => {
   // Calendar State
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  // Handle external prop changes (e.g. navigation from home)
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+      setStep(2);
+    }
+  }, [initialCategory]);
+
   // Scroll to top on step change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -81,21 +93,27 @@ export const RepairFlow = () => {
 
   // --- Step 1: Category Selection ---
   const renderCategorySelection = () => (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      {CATEGORIES.map((cat) => (
-        <Card 
-          key={cat.id} 
-          onClick={() => { setSelectedCategory(cat); setStep(2); }}
-          className="cursor-pointer hover:border-primary-500 hover:shadow-md transition-all group text-center py-8"
-        >
-          <div className="flex flex-col items-center gap-4">
-            <div className="p-4 rounded-full bg-slate-50 text-slate-600 group-hover:bg-primary-50 group-hover:text-primary-700 transition-colors">
-              {IconMap[cat.iconName]}
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold mb-2">What device needs repair?</h2>
+        <p className="text-slate-500">Select your device type to get started</p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {CATEGORIES.map((cat) => (
+          <Card 
+            key={cat.id} 
+            onClick={() => { setSelectedCategory(cat); setStep(2); }}
+            className="cursor-pointer hover:border-primary-500 hover:shadow-md transition-all group text-center py-8"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <div className="p-4 rounded-full bg-slate-50 text-slate-600 group-hover:bg-primary-50 group-hover:text-primary-700 transition-colors">
+                {IconMap[cat.iconName]}
+              </div>
+              <span className="font-semibold text-slate-800">{cat.name}</span>
             </div>
-            <span className="font-semibold text-slate-800">{cat.name}</span>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        ))}
+      </div>
     </div>
   );
 
@@ -109,7 +127,10 @@ export const RepairFlow = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-4 mb-4">
         <Button variant="ghost" onClick={() => setStep(1)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
-        <h2 className="text-2xl font-bold">Select Brand</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Select Brand</h2>
+          <p className="text-slate-500 text-sm">for {selectedCategory?.name}</p>
+        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {filteredBrands.map((brand) => (

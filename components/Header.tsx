@@ -129,6 +129,7 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
           <button onClick={() => onNavigate('home')} className={linkClass('home')}>Home</button>
+          <button onClick={() => onNavigate('repairs')} className={linkClass('repairs')}>Repairs</button>
           <button onClick={() => onNavigate('refurbished')} className={linkClass('refurbished')}>Refurbished Phones</button>
           <button onClick={() => onNavigate('accessories')} className={linkClass('accessories')}>Accessories</button>
           <button onClick={() => onNavigate('recycle')} className={cn(linkClass('recycle'), "flex items-center gap-1")}>
@@ -136,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
           </button>
           <button onClick={() => onNavigate('contact')} className={linkClass('contact')}>Contact</button>
           <button onClick={() => onNavigate('about')} className={linkClass('about')}>About Us</button>
-          <Button size="sm" onClick={() => onNavigate('home')}>Book Appointment</Button>
+          <Button size="sm" onClick={() => onNavigate('repairs')}>Book Appointment</Button>
         </nav>
 
         {/* Mobile Menu Toggle */}
@@ -155,6 +156,7 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
         <div className="md:hidden bg-white border-b border-slate-200 absolute top-full left-0 right-0 shadow-lg animate-in slide-in-from-top-5 duration-200 h-[calc(100vh-64px)] overflow-y-auto">
            <nav className="flex flex-col text-sm font-medium">
               <button onClick={() => handleMobileNavigate('home')} className={mobileLinkClass('home')}>Home</button>
+              <button onClick={() => handleMobileNavigate('repairs')} className={mobileLinkClass('repairs')}>Repairs</button>
               <button onClick={() => handleMobileNavigate('refurbished')} className={mobileLinkClass('refurbished')}>Refurbished Phones</button>
               <button onClick={() => handleMobileNavigate('accessories')} className={mobileLinkClass('accessories')}>Accessories</button>
               
@@ -162,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
               <button onClick={() => handleMobileNavigate('about')} className={mobileLinkClass('about')}>About Us</button>
               <button onClick={() => handleMobileNavigate('recycle')} className={mobileLinkClass('recycle')}>Recycle Program</button>
               <div className="p-4">
-                <Button className="w-full h-12 text-base" onClick={() => handleMobileNavigate('home')}>Book Appointment</Button>
+                <Button className="w-full h-12 text-base" onClick={() => handleMobileNavigate('repairs')}>Book Appointment</Button>
               </div>
               
               {/* Mobile Contact Info */}
