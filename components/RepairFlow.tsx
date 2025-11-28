@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Smartphone, Tablet, Laptop, Watch, Gamepad2, 
-  ChevronRight, ArrowLeft, Check, Search, Calendar, Clock 
+  ChevronRight, ArrowLeft, Check, Search, Calendar as CalendarIcon, Clock, AlertCircle, ChevronLeft 
 } from 'lucide-react';
 import { CATEGORIES, BRANDS, MODELS, getRepairsForType } from '../data';
 import { DeviceCategory, Brand, DeviceModel, RepairOption, BookingDetails } from '../types';
@@ -17,6 +17,46 @@ const IconMap: Record<string, React.ReactNode> = {
   Gamepad2: <Gamepad2 className="h-8 w-8" />,
 };
 
+// --- Helper for generating Time Slots ---
+const generateTimeSlots = (dateString: string): string[] => {
+  if (!dateString) return [];
+  
+  // Parse YYYY-MM-DD explicitly to avoid timezone shifts
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const dayOfWeek = date.getDay(); // 0 = Sun, 1 = Mon, ... 6 = Sat
+  
+  let startHour = 10;
+  let endHour = 18;
+  const slots: string[] = [];
+
+  // Configuration based on business hours
+  if (dayOfWeek === 0) return []; // Sunday Closed
+  
+  if (dayOfWeek === 1) { // Monday 1-6 PM (13:00 - 18:00)
+    startHour = 13;
+    endHour = 18;
+  } else if (dayOfWeek === 6) { // Saturday 10-5 PM (10:00 - 17:00)
+    endHour = 17;
+  } 
+  // Tue, Wed, Thu, Fri start at 10, end at 18 (default)
+
+  // Generate 30 min intervals
+  for (let h = startHour; h < endHour; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      // Friday Break Logic: Closed 13:00 - 14:00 (1 hour break)
+      // Strictly remove 13:00 and 13:30 slots on Friday
+      if (dayOfWeek === 5) { // 5 is Friday
+        if (h === 13) continue; 
+      }
+      
+      const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      slots.push(timeStr);
+    }
+  }
+  return slots;
+};
+
 export const RepairFlow = () => {
   const [step, setStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<DeviceCategory | null>(null);
@@ -27,6 +67,9 @@ export const RepairFlow = () => {
     date: '', time: '', name: '', email: '', phone: '', notes: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Calendar State
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Scroll to top on step change
   useEffect(() => {
@@ -257,75 +300,206 @@ export const RepairFlow = () => {
     </div>
   );
 
-  // --- Step 5: Booking Form ---
+  // --- Step 5: Booking Form with Date Picker ---
   const handleBooking = (e: React.FormEvent) => {
     e.preventDefault();
     setStep(6);
   };
 
+  // Calendar Logic
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+  const changeMonth = (offset: number) => {
+    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
+    setCurrentMonth(newDate);
+  };
+  
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = getFirstDayOfMonth(currentMonth);
+    const days = [];
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    // Empty slots for prev month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10"></div>);
+    }
+
+    // Days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
+      
+      // Construct date string manually to match local time and avoid UTC conversion issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const dayNum = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${dayNum}`;
+
+      const isSelected = bookingDetails.date === dateStr;
+      const isPast = date < today;
+      const isSunday = date.getDay() === 0;
+      const isDisabled = isPast || isSunday;
+
+      days.push(
+        <button
+          key={d}
+          type="button"
+          disabled={isDisabled}
+          onClick={() => {
+            setBookingDetails({ ...bookingDetails, date: dateStr, time: '' });
+          }}
+          className={cn(
+            "h-9 w-9 mx-auto rounded-full flex items-center justify-center text-sm transition-all",
+            isSelected 
+              ? "bg-primary-500 text-slate-900 font-bold" 
+              : "hover:bg-slate-100 text-slate-700",
+            isDisabled && "opacity-30 cursor-not-allowed hover:bg-transparent"
+          )}
+        >
+          {d}
+        </button>
+      );
+    }
+    return days;
+  };
+
+  const availableSlots = useMemo(() => {
+    return generateTimeSlots(bookingDetails.date);
+  }, [bookingDetails.date]);
+
   const renderBooking = () => (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
            <Button variant="ghost" onClick={() => setStep(4)}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
            <h2 className="text-2xl font-bold">Book Your Appointment</h2>
         </div>
         
-        <Card>
-          <CardContent className="pt-6">
-            <form onSubmit={handleBooking} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Full Name</label>
-                  <Input required placeholder="John Doe" value={bookingDetails.name} onChange={e => setBookingDetails({...bookingDetails, name: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone Number</label>
-                  <Input required placeholder="+31 6 12345678" value={bookingDetails.phone} onChange={e => setBookingDetails({...bookingDetails, phone: e.target.value})} />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email Address</label>
-                <Input required type="email" placeholder="john@example.com" value={bookingDetails.email} onChange={e => setBookingDetails({...bookingDetails, email: e.target.value})} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                   <label className="text-sm font-medium">Preferred Date</label>
-                   <div className="relative">
-                     <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                     <Input required type="date" className="pl-9" value={bookingDetails.date} onChange={e => setBookingDetails({...bookingDetails, date: e.target.value})} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column: Date & Time */}
+            <Card className="h-fit">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5 text-primary-600" />
+                  Select Date & Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {/* Calendar View */}
+                <div className="mb-6">
+                   <div className="flex items-center justify-between mb-4">
+                     <span className="font-bold text-slate-800">
+                       {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                     </span>
+                     <div className="flex gap-1">
+                       <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => changeMonth(-1)}>
+                         <ChevronLeft className="h-4 w-4" />
+                       </Button>
+                       <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => changeMonth(1)}>
+                         <ChevronRight className="h-4 w-4" />
+                       </Button>
+                     </div>
                    </div>
-                 </div>
-                 <div className="space-y-2">
-                   <label className="text-sm font-medium">Preferred Time</label>
-                   <div className="relative">
-                     <Clock className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                     <Input required type="time" className="pl-9" value={bookingDetails.time} onChange={e => setBookingDetails({...bookingDetails, time: e.target.value})} />
+                   <div className="grid grid-cols-7 text-center text-xs font-medium text-slate-400 mb-2">
+                     <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                    </div>
-                 </div>
-              </div>
+                   <div className="grid grid-cols-7 gap-y-2">
+                     {renderCalendar()}
+                   </div>
+                </div>
+                
+                {/* Time Slots */}
+                <div>
+                   <h4 className="font-medium text-sm text-slate-700 mb-3">Available Times</h4>
+                   {!bookingDetails.date ? (
+                     <p className="text-sm text-slate-400 text-center py-4 bg-slate-50 rounded-lg">Please select a date first</p>
+                   ) : availableSlots.length === 0 ? (
+                     <p className="text-sm text-red-500 text-center py-4 bg-red-50 rounded-lg">No available slots on this day.</p>
+                   ) : (
+                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
+                       {availableSlots.map(slot => (
+                         <button
+                           key={slot}
+                           type="button"
+                           onClick={() => setBookingDetails({ ...bookingDetails, time: slot })}
+                           className={cn(
+                             "py-2 px-1 text-sm rounded border transition-colors",
+                             bookingDetails.time === slot
+                               ? "bg-primary-500 border-primary-500 text-slate-900 font-medium"
+                               : "border-slate-200 hover:border-primary-500 hover:text-primary-600 text-slate-600"
+                           )}
+                         >
+                           {slot}
+                         </button>
+                       ))}
+                     </div>
+                   )}
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="bg-slate-50 p-4 rounded-lg space-y-2">
-                <h4 className="font-semibold text-sm text-slate-900">Repair Summary</h4>
-                <div className="flex justify-between text-sm text-slate-600">
-                   <span>Device:</span>
-                   <span>{selectedBrand?.name} {selectedModel?.name}</span>
-                </div>
-                <div className="flex justify-between text-sm text-slate-600">
-                   <span>Service(s):</span>
-                   <span>{selectedRepairs.map(r => r.name).join(', ')}</span>
-                </div>
-                <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
-                   <span>Estimated Total:</span>
-                   <span>€{totalPrice}</span>
-                </div>
-              </div>
+            {/* Right Column: User Details & Summary */}
+            <Card className="h-fit">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-lg">Your Details</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleBooking} className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Full Name</label>
+                      <Input required placeholder="John Doe" value={bookingDetails.name} onChange={e => setBookingDetails({...bookingDetails, name: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Phone Number</label>
+                      <Input required placeholder="+31 6 12345678" value={bookingDetails.phone} onChange={e => setBookingDetails({...bookingDetails, phone: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Email Address</label>
+                      <Input required type="email" placeholder="john@example.com" value={bookingDetails.email} onChange={e => setBookingDetails({...bookingDetails, email: e.target.value})} />
+                    </div>
+                  </div>
 
-              <Button type="submit" size="lg" className="w-full">Confirm Booking</Button>
-            </form>
-          </CardContent>
-        </Card>
+                  <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-100">
+                    <h4 className="font-semibold text-sm text-slate-900 border-b border-slate-200 pb-2">Booking Summary</h4>
+                    <div className="flex justify-between text-sm text-slate-600">
+                       <span>Device:</span>
+                       <span className="font-medium text-slate-900">{selectedBrand?.name} {selectedModel?.name}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-slate-600">
+                       <span>Repair:</span>
+                       <span className="font-medium text-slate-900">{selectedRepairs[0]?.name} {selectedRepairs.length > 1 && `+${selectedRepairs.length - 1} more`}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-slate-600">
+                       <span>Date:</span>
+                       <span className="font-medium text-slate-900">{bookingDetails.date || 'Not selected'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-slate-600">
+                       <span>Time:</span>
+                       <span className="font-medium text-slate-900">{bookingDetails.time || 'Not selected'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200 mt-2">
+                       <span>Total Est:</span>
+                       <span>€{totalPrice}</span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    size="lg" 
+                    className="w-full" 
+                    disabled={!bookingDetails.date || !bookingDetails.time}
+                  >
+                    Confirm Booking
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+        </div>
     </div>
   );
 

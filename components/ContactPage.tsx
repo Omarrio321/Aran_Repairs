@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle2, MessageSquare, Info } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from './ui';
 
 export const ContactPage = () => {
@@ -15,6 +15,16 @@ export const ContactPage = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormState({ ...formState, [e.target.name]: e.target.value });
   };
+
+  const schedule = [
+    { day: "Monday", hours: "13:00 – 18:00" },
+    { day: "Tuesday", hours: "10:00 – 18:00" },
+    { day: "Wednesday", hours: "10:00 – 18:00" },
+    { day: "Thursday", hours: "10:00 – 18:00" },
+    { day: "Friday", hours: "10:00 – 13:00 & 14:00 – 18:00", note: "Closed 1pm-2pm" },
+    { day: "Saturday", hours: "10:00 – 17:00" },
+    { day: "Sunday", hours: "Closed", isClosed: true },
+  ];
 
   return (
     <div className="container mx-auto px-4 py-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -61,7 +71,6 @@ export const ContactPage = () => {
                   <p className="text-slate-600 text-sm mt-1">
                     +31 6 12345678
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">Mon-Fri, 9am - 6pm</p>
                 </div>
               </div>
 
@@ -78,20 +87,25 @@ export const ContactPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 pt-6 border-t border-slate-100">
-                <div className="bg-slate-100 p-3 rounded-lg text-slate-600">
-                  <Clock className="h-6 w-6" />
+              <div className="pt-6 border-t border-slate-100">
+                <div className="flex items-center gap-2 mb-4 text-slate-900 font-semibold">
+                  <Clock className="h-5 w-5 text-primary-600" />
+                  <h3>Opening Hours</h3>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">Opening Hours</h3>
-                  <div className="text-sm text-slate-600 mt-1 grid grid-cols-2 gap-x-4">
-                    <span>Mon - Fri:</span>
-                    <span>09:00 - 18:00</span>
-                    <span>Saturday:</span>
-                    <span>09:00 - 17:00</span>
-                    <span>Sunday:</span>
-                    <span>Closed</span>
-                  </div>
+                <div className="space-y-3">
+                  {schedule.map((item, idx) => (
+                    <div key={idx} className={`flex flex-col text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0 ${item.isClosed ? 'text-slate-400' : 'text-slate-700'}`}>
+                       <div className="flex justify-between items-center">
+                         <span className="font-medium w-24">{item.day}</span>
+                         <span className="text-right">{item.hours}</span>
+                       </div>
+                       {item.note && (
+                         <div className="flex items-center justify-end gap-1 text-xs text-amber-600 mt-0.5 font-medium">
+                           <Info className="h-3 w-3" /> {item.note}
+                         </div>
+                       )}
+                    </div>
+                  ))}
                 </div>
               </div>
 

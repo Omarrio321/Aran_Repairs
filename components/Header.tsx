@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Wrench, Phone, Mail, Menu, X, Recycle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Wrench, Phone, Mail, Menu, X, Recycle, Clock } from 'lucide-react';
 import { Button } from './ui';
 import { cn } from './ui';
 
@@ -7,6 +7,75 @@ interface HeaderProps {
   activePage: string;
   onNavigate: (page: string) => void;
 }
+
+const LiveStatus = () => {
+  const [status, setStatus] = useState({ isOpen: false, message: 'Checking...' });
+
+  useEffect(() => {
+    const checkStatus = () => {
+      const now = new Date();
+      const day = now.getDay(); // 0-6 Sun-Sat
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const time = hours + minutes / 60;
+
+      let isOpen = false;
+      let message = "Closed";
+
+      if (day === 0) { // Sunday
+         message = "Closed (Sunday)";
+         isOpen = false;
+      } else if (day === 6) { // Saturday 10-17
+         if (time >= 10 && time < 17) {
+           isOpen = true;
+           message = "Open until 17:00";
+         } else {
+           isOpen = false;
+           message = time < 10 ? "Opens at 10:00" : "Closed";
+         }
+      } else if (day === 1) { // Monday 13-18
+         if (time >= 13 && time < 18) {
+           isOpen = true;
+           message = "Open until 18:00";
+         } else {
+           isOpen = false;
+           message = time < 13 ? "Opens at 13:00" : "Closed";
+         }
+      } else if (day === 5) { // Friday 10-13, 14-18
+         if ((time >= 10 && time < 13) || (time >= 14 && time < 18)) {
+           isOpen = true;
+           message = time < 13 ? "Open until 13:00 (Lunch)" : "Open until 18:00";
+         } else if (time >= 13 && time < 14) {
+           isOpen = false;
+           message = "Lunch Break (Reopens 14:00)";
+         } else {
+           isOpen = false;
+           message = time < 10 ? "Opens at 10:00" : "Closed";
+         }
+      } else { // Tue, Wed, Thu 10-18
+         if (time >= 10 && time < 18) {
+           isOpen = true;
+           message = "Open until 18:00";
+         } else {
+           isOpen = false;
+           message = time < 10 ? "Opens at 10:00" : "Closed";
+         }
+      }
+      setStatus({ isOpen, message });
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className={cn("h-2.5 w-2.5 rounded-full animate-pulse", status.isOpen ? "bg-green-500" : "bg-red-500")} />
+      <span>{status.message}</span>
+    </div>
+  );
+};
 
 export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,8 +108,8 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
                <Mail className="h-3 w-3" /> info@aranrepairs.nl
              </span>
            </div>
-           <div className="hidden md:block">
-             Open Mon-Fri: 09:00 - 18:00 | Sat: 09:00 - 17:00
+           <div className="hidden md:block font-medium">
+             <LiveStatus />
            </div>
         </div>
       </div>
@@ -104,6 +173,9 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4" /> 
                   <span>info@aranrepairs.nl</span>
+                </div>
+                <div className="flex items-center gap-3 font-medium text-slate-900 pt-2">
+                   <LiveStatus />
                 </div>
               </div>
            </nav>
