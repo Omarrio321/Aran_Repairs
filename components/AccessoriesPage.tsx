@@ -1,10 +1,15 @@
+
 import React, { useState } from 'react';
 import { Badge, Button, Card, CardContent } from './ui';
 import { ACCESSORIES } from '../data';
-import { ShieldCheck, Zap, Smartphone, Headphones } from 'lucide-react';
+import { ShieldCheck, Zap, Smartphone, Headphones, ShoppingCart, CheckCircle2 } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
+import { cn } from './ui';
 
 export const AccessoriesPage = () => {
   const [filterType, setFilterType] = useState<string>('all');
+  const { addToCart } = useCart();
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   const categories = [
     { id: 'all', label: 'All', icon: null },
@@ -18,8 +23,23 @@ export const AccessoriesPage = () => {
     ? ACCESSORIES 
     : ACCESSORIES.filter(item => item.type === filterType);
 
+  const handleAdd = (item: typeof ACCESSORIES[0]) => {
+    addToCart({
+      productId: item.id,
+      type: 'accessory',
+      name: item.name,
+      description: item.type,
+      price: item.price,
+      image: item.image,
+      quantity: 1
+    });
+
+    setAddingId(item.id);
+    setTimeout(() => setAddingId(null), 1500);
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 animate-in fade-in duration-500">
       <div className="text-center max-w-2xl mx-auto mb-12">
         <h1 className="text-3xl font-bold text-slate-900 mb-4">Essential Accessories</h1>
         <p className="text-slate-500">
@@ -48,7 +68,7 @@ export const AccessoriesPage = () => {
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredItems.map(item => (
-          <Card key={item.id} className="group hover:shadow-md transition-all">
+          <Card key={item.id} className="group hover:shadow-md transition-all flex flex-col">
             <div className="aspect-square bg-slate-50 relative p-6 flex items-center justify-center">
               <img 
                 src={item.image} 
@@ -59,15 +79,22 @@ export const AccessoriesPage = () => {
                 <Badge className="absolute top-3 left-3 bg-primary-600">{item.badge}</Badge>
               )}
             </div>
-            <CardContent className="p-5">
+            <CardContent className="p-5 flex-1 flex flex-col">
               <div className="mb-2">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{item.type}</p>
                 <h3 className="font-bold text-slate-900">{item.name}</h3>
               </div>
               <p className="text-sm text-slate-500 mb-4 line-clamp-2">{item.description}</p>
-              <div className="flex items-center justify-between">
+              <div className="mt-auto flex items-center justify-between">
                 <span className="font-bold text-lg">€{item.price}</span>
-                <Button size="sm" variant="secondary">Add to Cart</Button>
+                <Button 
+                   size="sm" 
+                   variant="secondary"
+                   className={cn("transition-all", addingId === item.id ? "bg-green-100 text-green-700 hover:bg-green-200" : "")}
+                   onClick={() => handleAdd(item)}
+                >
+                  {addingId === item.id ? <CheckCircle2 className="h-4 w-4" /> : 'Add to Cart'}
+                </Button>
               </div>
             </CardContent>
           </Card>

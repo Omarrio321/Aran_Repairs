@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -7,10 +8,12 @@ import { AccessoriesPage } from './components/AccessoriesPage';
 import { ContactPage } from './components/ContactPage';
 import { EnvironmentPage } from './components/EnvironmentPage';
 import { AboutPage } from './components/AboutPage';
+import { CheckoutPage } from './components/CheckoutPage';
 import { ShieldCheck, Clock, Award, Star, Smartphone, Tablet, Laptop, Watch, Gamepad2 } from 'lucide-react';
 import { Card } from './components/ui';
 import { CATEGORIES } from './data';
 import { DeviceCategory } from './types';
+import { CartProvider } from './contexts/CartContext';
 
 const Features = () => (
   <section className="py-12 bg-white border-y border-slate-100">
@@ -119,25 +122,29 @@ const App: React.FC = () => {
         return <EnvironmentPage />;
       case 'about':
         return <AboutPage />;
+      case 'checkout':
+        return <CheckoutPage />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
-      <Header activePage={activePage} onNavigate={(page) => {
-        if (page === 'repairs') setSelectedCategoryForRepair(null); // Reset when clicking header link
-        setActivePage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }} />
-      
-      <main className="flex-grow">
-        {renderContent()}
-      </main>
+    <CartProvider>
+      <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
+        <Header activePage={activePage} onNavigate={(page) => {
+          if (page === 'repairs') setSelectedCategoryForRepair(null); // Reset when clicking header link
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }} />
+        
+        <main className="flex-grow">
+          {renderContent()}
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </CartProvider>
   );
 };
 

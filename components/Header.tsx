@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import { Wrench, Phone, Mail, Menu, X, Recycle, Clock } from 'lucide-react';
+import { Wrench, Phone, Mail, Menu, X, Recycle, ShoppingCart } from 'lucide-react';
 import { Button } from './ui';
 import { cn } from './ui';
+import { useCart } from '../contexts/CartContext';
 
 interface HeaderProps {
   activePage: string;
@@ -79,6 +81,7 @@ const LiveStatus = () => {
 
 export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { itemCount } = useCart();
 
   const linkClass = (page: string) => cn(
     "cursor-pointer transition-colors",
@@ -136,19 +139,44 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
             <Recycle className="h-4 w-4" /> Recycle
           </button>
           <button onClick={() => onNavigate('contact')} className={linkClass('contact')}>Contact</button>
-          <button onClick={() => onNavigate('about')} className={linkClass('about')}>About Us</button>
-          <Button size="sm" onClick={() => onNavigate('repairs')}>Book Appointment</Button>
+          
+          <div className="flex items-center gap-4 ml-2">
+            <button 
+              onClick={() => onNavigate('checkout')} 
+              className={cn("relative p-2 rounded-full hover:bg-slate-100 transition-colors", activePage === 'checkout' ? 'text-primary-600' : 'text-slate-600')}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+            <Button size="sm" onClick={() => onNavigate('repairs')}>Book Appointment</Button>
+          </div>
         </nav>
 
         {/* Mobile Menu Toggle */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+        <div className="flex items-center gap-4 md:hidden">
+          <button 
+            onClick={() => handleMobileNavigate('checkout')} 
+            className="relative p-2 text-slate-600"
+          >
+            <ShoppingCart className="h-6 w-6" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">
+                {itemCount}
+              </span>
+            )}
+          </button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Navigation Dropdown */}
@@ -163,6 +191,15 @@ export const Header: React.FC<HeaderProps> = ({ activePage, onNavigate }) => {
               <button onClick={() => handleMobileNavigate('contact')} className={mobileLinkClass('contact')}>Contact</button>
               <button onClick={() => handleMobileNavigate('about')} className={mobileLinkClass('about')}>About Us</button>
               <button onClick={() => handleMobileNavigate('recycle')} className={mobileLinkClass('recycle')}>Recycle Program</button>
+              
+              <button 
+                 onClick={() => handleMobileNavigate('checkout')} 
+                 className={cn(mobileLinkClass('checkout'), "flex items-center justify-between")}
+              >
+                <span>Shopping Cart</span>
+                {itemCount > 0 && <span className="bg-primary-500 text-slate-900 px-2 py-0.5 rounded-full text-xs font-bold">{itemCount} items</span>}
+              </button>
+
               <div className="p-4">
                 <Button className="w-full h-12 text-base" onClick={() => handleMobileNavigate('repairs')}>Book Appointment</Button>
               </div>

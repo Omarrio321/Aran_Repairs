@@ -1,13 +1,18 @@
+
 import React, { useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from './ui';
+import { Badge, Button, Card, CardContent, Input, cn } from './ui';
 import { REFURBISHED_DEVICES } from '../data';
 import { RefurbishedDevice } from '../types';
-import { CheckCircle2, Search, ArrowLeft, Battery, Shield, Truck, Smartphone } from 'lucide-react';
+import { CheckCircle2, Search, ArrowLeft, Battery, Shield, Truck, Smartphone, ShoppingCart } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
 
 export const RefurbishedPage = () => {
   const [filterBrand, setFilterBrand] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selectedDevice, setSelectedDevice] = useState<RefurbishedDevice | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
 
   const filteredDevices = REFURBISHED_DEVICES.filter(device => {
     const matchBrand = filterBrand === 'all' || device.brandId === filterBrand;
@@ -15,13 +20,40 @@ export const RefurbishedPage = () => {
     return matchBrand && matchSearch;
   });
 
+  const handleAddToCart = () => {
+    if (!selectedDevice) return;
+    
+    addToCart({
+      productId: selectedDevice.id,
+      type: 'refurbished',
+      name: selectedDevice.name,
+      description: `${selectedDevice.storage} - ${selectedDevice.condition} Condition`,
+      price: selectedDevice.price,
+      image: selectedDevice.image,
+      quantity: 1,
+      details: {
+        color: selectedColor || selectedDevice.colors[0],
+        condition: selectedDevice.condition,
+        storage: selectedDevice.storage
+      }
+    });
+
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
   // --- Detail View ---
   if (selectedDevice) {
+    // Default color selection if not set
+    if (!selectedColor && selectedDevice.colors.length > 0) {
+      setSelectedColor(selectedDevice.colors[0]);
+    }
+
     return (
       <div className="container mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <Button 
           variant="ghost" 
-          onClick={() => setSelectedDevice(null)} 
+          onClick={() => { setSelectedDevice(null); setSelectedColor(null); }} 
           className="mb-6 pl-0 hover:bg-transparent hover:text-primary-600"
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to all devices
@@ -72,7 +104,11 @@ export const RefurbishedPage = () => {
                         {selectedDevice.colors.map((color, i) => (
                             <div 
                                 key={i}
-                                className="w-10 h-10 rounded-full border border-slate-200 shadow-sm cursor-pointer hover:scale-110 transition-transform ring-2 ring-transparent hover:ring-primary-500 ring-offset-2 relative"
+                                onClick={() => setSelectedColor(color)}
+                                className={cn(
+                                    "w-10 h-10 rounded-full border border-slate-200 shadow-sm cursor-pointer hover:scale-110 transition-transform relative",
+                                    selectedColor === color ? "ring-2 ring-primary-500 ring-offset-2" : "hover:ring-2 hover:ring-primary-300 hover:ring-offset-2"
+                                )}
                                 style={{ backgroundColor: color }}
                                 title="Color option"
                             />
@@ -113,8 +149,20 @@ export const RefurbishedPage = () => {
                 </div>
 
                 <div className="mt-auto flex gap-4">
-                    <Button size="lg" className="flex-1 text-lg h-14" onClick={() => alert('Item added to cart!')}>
-                        Add to Cart
+                    <Button 
+                      size="lg" 
+                      className={cn("flex-1 text-lg h-14 transition-all", added ? "bg-green-600 hover:bg-green-700" : "")}
+                      onClick={handleAddToCart}
+                    >
+                        {added ? (
+                           <>
+                             <CheckCircle2 className="mr-2 h-5 w-5" /> Added to Cart
+                           </>
+                        ) : (
+                           <>
+                             <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+                           </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -176,7 +224,7 @@ export const RefurbishedPage = () => {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredDevices.map(device => (
-          <Card key={device.id} className="overflow-hidden hover:shadow-lg transition-shadow group flex flex-col">
+          <Card key={device.id} className="overflow-hidden hover:shadow-lg transition-shadow group flex flex-col cursor-pointer" onClick={() => setSelectedDevice(device)}>
             <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
                <img 
                  src={device.image} 
@@ -211,7 +259,7 @@ export const RefurbishedPage = () => {
                    <span className="text-xs text-slate-400 line-through">€{device.originalPrice}</span>
                    <span className="text-xl font-bold text-primary-600">€{device.price}</span>
                  </div>
-                 <Button size="sm" onClick={() => setSelectedDevice(device)}>View Details</Button>
+                 <Button size="sm">View Details</Button>
               </div>
             </CardContent>
           </Card>

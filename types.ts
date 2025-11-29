@@ -1,3 +1,4 @@
+
 export type DeviceType = 'phone' | 'tablet' | 'laptop' | 'watch' | 'console';
 
 export interface DeviceCategory {
@@ -31,8 +32,15 @@ export interface RepairOption {
 }
 
 export interface CartItem {
-  model: DeviceModel;
-  repair: RepairOption;
+  id: string; // Unique instance ID in cart
+  productId: string;
+  type: 'refurbished' | 'accessory';
+  name: string;
+  description?: string;
+  price: number;
+  image: string;
+  quantity: number;
+  details?: any; // For storing specific options like selected color
 }
 
 export interface BookingDetails {
